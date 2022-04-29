@@ -7,13 +7,13 @@ from nltk.chunk import ChunkParserI
 
 
 class ProductionRuleExtractor(ChunkParserI):
-    """
+    '''''''''
     Code taken from:
     https://www.kdnuggets.com/2018/08/understanding-language-syntax-and-structure-practitioners-guide-nlp-3.html
 
     According to here: https://www.reddit.com/r/Python/comments/fackw/setting_up_a_german_chunked_language_corpus_to/
                        it is not easy to find a chunker for German.
-    """
+    '''
     def __init__(self, tagger_classes=[UnigramTagger, BigramTagger]):
         train_sent_tags = self.conll_tag_chunks(conll2000.chunked_sents())
         self.chunk_tagger = self.combined_tagger(train_sent_tags, tagger_classes)
@@ -42,7 +42,7 @@ class ProductionRuleExtractor(ChunkParserI):
         for production in chunk_tree.productions():
             lhs = str(production.lhs())
             rhs = [a[1] if type(a) == tuple else a for a in production.rhs()]
-            production_str = lhs + "->" + "_".join([str(a) for a in rhs])
+            production_str = lhs + '->' + '_'.join([str(a) for a in rhs])
             productions.append(production_str)
         return productions
 
