@@ -4,7 +4,6 @@ import spacy
 import string
 import logging
 import textstat
-from tqdm import tqdm
 from pathlib import Path
 from scipy.stats import entropy
 from unidecode import unidecode
@@ -15,7 +14,7 @@ from utils import load_list_of_lines, save_list_of_lines, get_bookname
 
 
 class DocBasedFeatureExtractor():
-    '''Get features that can be calculated from a single document.'''
+    '''Get features that can be calculated from a single doc.'''
     def __init__(self, 
         language, 
         doc_path, 
@@ -131,7 +130,7 @@ class DocBasedFeatureExtractor():
         chunk_feature_mapping = {
             'ratio_of_punctuation_marks': self.get_ratio_of_punctuation_marks,
             'ratio_of_whitespaces': self.get_ratio_of_whitespaces,
-            'ratio_of_digits': self.get_ratio_of_digits,
+            #'ratio_of_digits': self.get_ratio_of_digits,
             'ratio_of_exclamation_marks': self.get_ratio_of_exclamation_marks,
             'ratio_of_question_marks': self.get_ratio_of_question_marks,
             'ratio_of_commas': self.get_ratio_of_commas,
@@ -146,10 +145,10 @@ class DocBasedFeatureExtractor():
             'bigram_entropy': self.get_bigram_entropy,
             'trigram_entropy': self.get_trigram_entropy,
             'type_token_ratio': self.get_type_token_ratio,
-            'flesch_reading_ease_score': self.get_flesch_reading_ease_score, # readability
+            'flesch_reading_ease_score': self.get_flesch_reading_ease_score,
             'unigram_entropy': self.get_unigram_entropy, # second order redundancy
             'average_paragraph_length': self.get_average_paragraph_length, # structural features
-            0: self.get_average_sbert_sentence_embedding,
+            0: self.get_average_sbert_sentence_embedding, 
             1: self.get_doc2vec_chunk_embedding
         }
 
@@ -335,8 +334,11 @@ class DocBasedFeatureExtractor():
         return self.__get_intra_textual_variance(chunks, 'sbert')
 
     def __get_stepwise_distance(self, chunks, embedding_type):
+        if len(chunks) == 1:
+            return 0
         euclidean_distances = []
         for chunk_idx in range(1, len(chunks)):
+            #print('index', chunk_idx)
             if embedding_type == 'doc2vec':
                 current_chunk_embedding = chunks[chunk_idx].doc2vec_chunk_embedding
                 previous_chunk_embedding = chunks[chunk_idx - 1].doc2vec_chunk_embedding
@@ -345,7 +347,9 @@ class DocBasedFeatureExtractor():
                 previous_chunk_embedding = np.array(chunks[chunk_idx - 1].sbert_sentence_embeddings).mean(axis=0)
             else:
                 raise Exception(f'Not a valid embedding type {embedding_type}')
+            #print('Norm:\n', np.linalg.norm(current_chunk_embedding - previous_chunk_embedding))
             euclidean_distances.append(np.linalg.norm(current_chunk_embedding - previous_chunk_embedding))
+        #print('Mean\n: ', np.mean(euclidean_distances))
         return np.mean(euclidean_distances)
 
     def get_doc2vec_stepwise_distance(self, chunks):
